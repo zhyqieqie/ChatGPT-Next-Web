@@ -269,3 +269,25 @@
 
   .default-theme {}
 }
+
+.original-result-value{
+  justify-content: unset;
+}
+
+.original-detect-wrap{
+  display: flex;
+  flex-direction: column;
+}
+.original-detect-item{
+  display: flex;
+  flex-direction: row;
+  height: 45px;
+  align-items: center;
+  margin-left: 20px;
+}
+.original-detect-item-provide{
+  margin-left: 20px;
+}
+.original-detect-item-score{
+  margin-left: 20px;
+}

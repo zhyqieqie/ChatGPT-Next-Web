@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 import { ChatMessage, ModelType, useAppConfig, useChatStore } from "../store";
 import Locale from "../locales";
-import styles from "./exporter.module.scss";
+import styles from "./detecter.module.scss";
 import {
   List,
   ListItem,
@@ -22,6 +22,7 @@ import {
 import CopyIcon from "../icons/copy.svg";
 import LoadingIcon from "../icons/three-dots.svg";
 import ChatGptIcon from "../icons/chatgpt.png";
+import OKIcon from "../icons/OK.png";
 import ShareIcon from "../icons/share.svg";
 import BotIcon from "../icons/bot.png";
 
@@ -46,11 +47,14 @@ const Markdown = dynamic(async () => (await import("./markdown")).Markdown, {
   loading: () => <LoadingIcon />,
 });
 
+let title = "";
+let content = "";
+let detectResult = {};
 export function DetectMessageModal(props: { onClose: () => void }) {
   return (
     <div className="modal-mask">
       <Modal
-        title="文章检测"
+        title="一键检测"
         onClose={props.onClose}
         footer={
           <div
@@ -61,12 +65,11 @@ export function DetectMessageModal(props: { onClose: () => void }) {
               opacity: 0.5,
             }}
           >
-            {Locale.Exporter.Description.Title}
           </div>
         }
       >
         <div style={{ minHeight: "40vh" }}>
-          <MessageExporter />
+          <OriginalDetect />
         </div>
       </Modal>
     </div>
@@ -137,14 +140,14 @@ function Steps<
   );
 }
 
-export function MessageExporter() {
+export function OriginalDetect() {
   const steps = [
     {
-      name: Locale.Export.Steps.Select,
-      value: "select",
+      name: "原创检测",
+      value: "detect",
     },
     {
-      name: Locale.Export.Steps.Preview,
+      name: "其他检测",
       value: "preview",
     },
   ];
@@ -195,58 +198,43 @@ export function MessageExporter() {
       );
     }
   }
+
   return (
     <>
+      <List>
+        <ListItem className={styles["original-result-value"]}
+                  title="原创检测结果："
+        >
+          <span >NaN</span>
+        </ListItem>
+      </List>
       <Steps
         steps={steps}
         index={currentStepIndex}
         onStepChange={setCurrentStepIndex}
       />
+      {/*原创检测过程*/}
+      <div className={styles["original-detect-wrap"]}>
+        <div className={styles["original-detect-item"]}>
+          <NextImage
+              src={OKIcon.src}
+              alt="logo"
+              width={25}
+              height={25}
+          />
+          <div className={styles["original-detect-item-provide"]}>
+            经baidu原创检测得分：
+          </div>
+          <div className={styles["original-detect-item-score"]}>
+            20
+          </div>
+        </div>
+      </div>
+
       <div
-        className={styles["message-exporter-body"]}
-        style={currentStep.value !== "select" ? { display: "none" } : {}}
+          className={styles["message-exporter-body"]}
+          style={currentStep.value !== "detect" ? { display: "none" } : {}}
       >
-        <List>
-          <ListItem
-            title={Locale.Export.Format.Title}
-            subTitle={Locale.Export.Format.SubTitle}
-          >
-            <Select
-              value={exportConfig.format}
-              onChange={(e) =>
-                updateExportConfig(
-                  (config) =>
-                    (config.format = e.currentTarget.value as ExportFormat),
-                )
-              }
-            >
-              {formats.map((f) => (
-                <option key={f} value={f}>
-                  {f}
-                </option>
-              ))}
-            </Select>
-          </ListItem>
-          <ListItem
-            title={Locale.Export.IncludeContext.Title}
-            subTitle={Locale.Export.IncludeContext.SubTitle}
-          >
-            <input
-              type="checkbox"
-              checked={exportConfig.includeContext}
-              onChange={(e) => {
-                updateExportConfig(
-                  (config) => (config.includeContext = e.currentTarget.checked),
-                );
-              }}
-            ></input>
-          </ListItem>
-        </List>
-        <MessageSelector
-          selection={selection}
-          updateSelection={updateSelection}
-          defaultSelectAll
-        />
       </div>
       {currentStep.value === "preview" && (
         <div className={styles["message-exporter-body"]}>{preview()}</div>
