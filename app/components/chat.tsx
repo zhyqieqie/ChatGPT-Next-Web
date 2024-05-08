@@ -95,6 +95,7 @@ import { useMaskStore } from "../store/mask";
 import { ChatCommandPrefix, useChatCommand, useCommand } from "../command";
 import { prettyObject } from "../utils/format";
 import { ExportMessageModal } from "./exporter";
+import { DetectMessageModal } from "./detecter";
 import { getClientConfig } from "../config/client";
 import { useAllModels } from "../utils/hooks";
 import { MultimodalContent } from "../client/api";
@@ -672,6 +673,7 @@ function _Chat() {
   const fontSize = config.fontSize;
 
   const [showExport, setShowExport] = useState(false);
+  const [showDetect, setShowDetect] = useState(false);
 
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const [userInput, setUserInput] = useState("");
@@ -1398,7 +1400,7 @@ function _Chat() {
                                   text={Locale.Chat.Actions.Original}
                                   icon={<OriginalIcon />}
                                   onClick={() =>
-                                    setShowExport(true)
+                                    setShowDetect(true)
                                   }
                               />
                             </>
@@ -1557,6 +1559,9 @@ function _Chat() {
 
       {showExport && (
         <ExportMessageModal onClose={() => setShowExport(false)} />
+      )}
+      {showDetect && (
+          <DetectMessageModal onClose={() => setShowDetect(false)} />
       )}
 
       {isEditingMessage && (

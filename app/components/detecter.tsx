@@ -46,11 +46,11 @@ const Markdown = dynamic(async () => (await import("./markdown")).Markdown, {
   loading: () => <LoadingIcon />,
 });
 
-export function ExportMessageModal(props: { onClose: () => void }) {
+export function DetectMessageModal(props: { onClose: () => void }) {
   return (
     <div className="modal-mask">
       <Modal
-        title={Locale.Export.Title}
+        title="文章检测"
         onClose={props.onClose}
         footer={
           <div
