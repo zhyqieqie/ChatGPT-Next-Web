@@ -10,7 +10,7 @@ export const RUNTIME_CONFIG_DOM = "danger-runtime-config";
 
 export const DEFAULT_API_HOST = "https://api.nextchat.dev";
 export const OPENAI_BASE_URL = "https://api.openai.com";
-export const ANTHROPIC_BASE_URL = "https://api.anthropic.com";
+export const ANTHROPIC_BASE_URL = "https://api.gptsapi.net";
 
 export const GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/";
 
@@ -81,8 +81,8 @@ export enum ModelProvider {
 export const Anthropic = {
   ChatPath: "v1/messages",
   ChatPath1: "v1/complete",
-  ExampleEndpoint: "https://api.anthropic.com",
-  Vision: "2023-06-01",
+  ExampleEndpoint: "https://api.gptsapi.net",
+  Vision: "2024-02-29",
 };
 
 export const OpenaiPath = {

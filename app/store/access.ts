@@ -19,9 +19,9 @@ const DEFAULT_OPENAI_URL =
 
 const DEFAULT_ACCESS_STATE = {
   accessCode: "",
-  useCustomConfig: false,
+  useCustomConfig: true,
 
-  provider: ServiceProvider.OpenAI,
+  provider: ServiceProvider.Anthropic,
 
   // openai
   openaiUrl: DEFAULT_OPENAI_URL,
@@ -38,9 +38,9 @@ const DEFAULT_ACCESS_STATE = {
   googleApiVersion: "v1",
 
   // anthropic
-  anthropicApiKey: "",
-  anthropicApiVersion: "2023-06-01",
-  anthropicUrl: "",
+  anthropicApiKey: "sk-Sgo1f6afc328268a5798b1c8921153d73d620551e44glq3I",
+  anthropicApiVersion: "2024-02-29",
+  anthropicUrl: "https://api.gptsapi.net",
 
   // server config
   needCode: true,
@@ -106,7 +106,7 @@ export const useAccessStore = createPersistStore(
           // Set default model from env request
           let defaultModel = res.defaultModel ?? "";
           DEFAULT_CONFIG.modelConfig.model =
-            defaultModel !== "" ? defaultModel : "gpt-3.5-turbo";
+            defaultModel !== "" ? defaultModel : "claude-3-sonnet-20240229";
           return res;
         })
         .then((res: DangerConfig) => {

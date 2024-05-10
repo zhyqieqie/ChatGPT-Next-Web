@@ -942,6 +942,14 @@ function _Chat() {
     });
   };
 
+  const onDetectMessage = (message: ChatMessage) => {
+    setIsLoading(true);
+    chatStore.updateCurrentSession((session) =>
+      session.mask.context.push(message),
+    );
+    setShowDetect(true);
+  };
+
   const context: RenderMessage[] = useMemo(() => {
     return session.mask.hideContext ? [] : session.mask.context.slice();
   }, [session.mask.context, session.mask.hideContext]);
@@ -1397,11 +1405,9 @@ function _Chat() {
                                 }
                               />
                               <ChatAction
-                                  text={Locale.Chat.Actions.Original}
-                                  icon={<OriginalIcon />}
-                                  onClick={() =>
-                                    setShowDetect(true)
-                                  }
+                                text={Locale.Chat.Actions.Original}
+                                icon={<OriginalIcon />}
+                                onClick={() => onDetectMessage(message)}
                               />
                             </>
                           )}
@@ -1561,7 +1567,7 @@ function _Chat() {
         <ExportMessageModal onClose={() => setShowExport(false)} />
       )}
       {showDetect && (
-          <DetectMessageModal onClose={() => setShowDetect(false)} />
+        <DetectMessageModal onClose={() => setShowDetect(false)} />
       )}
 
       {isEditingMessage && (

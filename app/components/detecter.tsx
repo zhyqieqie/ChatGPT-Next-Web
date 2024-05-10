@@ -47,9 +47,41 @@ const Markdown = dynamic(async () => (await import("./markdown")).Markdown, {
   loading: () => <LoadingIcon />,
 });
 
-let title = "";
-let content = "";
-let detectResult = {};
+let title = "一场龙争虎斗的激烈篮球赛";
+let content =
+  "一场别树一格的赛事让无数运动爱好者血脉贲张,尤其是吾辈同袍,更是观摩津津乐道。你猜猜看,究竟是哪两支劲旅在绿茵场上展开了一场龙争虎斗?莫急,姑且为你娓娓道来。";
+/*let detectResult = {
+  "baidu": "-",
+  "_360": "-",
+  "score": "-"
+};
+let risk1Result = {
+  "rtype": "1",
+  "action": "",
+  "labelsList": []
+};
+let risk2Result = {
+  "rtype": "2",
+  "action": "",
+  "labelsList": []
+};
+let analysisTitleResult = {
+  "emotion": "-",
+  "titlesection": "",
+  "category1": "",
+  "title": ""
+};
+let extractLabelResult = {
+  "labelinfo":{
+    "title":"",
+    "labels":[{"score":"","tag":""}]},
+  "category":"体育"
+};*/
+
+let token =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VySWQiOiJhODY5YTkwNS0zZWQ5LTRjNDktYTMxYi04ODhjZmNlNzEzZTgiLCJUaW1lU3BhbiI6IjIwMjQwNTA4MTExNjM0IiwibmJmIjoxNzE1MTM4MTk0LCJleHAiOjE3MTc3MzAxOTQsImlzcyI6Ill6T3BlbiIsImF1ZCI6Ill6T3BlbiJ9.j6_VTF29sK5vS90FBGG6jsCR6Dfg2r2DNjL_IUi_Oco";
+//let analysisUrl = "https://a.lvpao.run/a/article/articleyizhuan/analysis";
+let analysisUrl = "http://localhost:9300/a/article/articleyizhuan/analysis";
 export function DetectMessageModal(props: { onClose: () => void }) {
   return (
     <div className="modal-mask">
@@ -64,9 +96,9 @@ export function DetectMessageModal(props: { onClose: () => void }) {
               fontSize: 14,
               opacity: 0.5,
             }}
-          >
-          </div>
+          ></div>
         }
+        defaultMax={true}
       >
         <div style={{ minHeight: "40vh" }}>
           <OriginalDetect />
@@ -147,20 +179,65 @@ export function OriginalDetect() {
       value: "detect",
     },
     {
+      name: "风险检测",
+      value: "risk",
+    },
+    {
+      name: "标题分析",
+      value: "title",
+    },
+    {
+      name: "提取文章标题",
+      value: "title",
+    },
+    /*{
       name: "其他检测",
       value: "preview",
-    },
+    },*/
   ];
   const { currentStep, setCurrentStepIndex, currentStepIndex } =
     useSteps(steps);
   const formats = ["text", "image", "json"] as const;
   type ExportFormat = (typeof formats)[number];
-
+  const config = useAppConfig();
   const [exportConfig, setExportConfig] = useState({
     format: "image" as ExportFormat,
     includeContext: true,
   });
+  const [loading, setLoading] = useState(false);
 
+  const [score, setScore] = useState({
+    score: "",
+    _360: "",
+    baidu: "",
+  });
+
+  const [risk1, setRisk1] = useState({
+    rtype: "",
+    action: "",
+    labelsList: [],
+  });
+
+  const [risk2, setRisk2] = useState({
+    rtype: "",
+    action: "",
+    labelsList: [],
+  });
+
+  const [analysisTitle, setAnalysisTitle] = useState({
+    emotion: "",
+    titlesection: false,
+    category1: "",
+    title: "",
+  });
+
+  const [extractLabel, setExtractLabel] = useState({
+    labelinfo: {
+      title: "",
+      labels: [{ score: "", tag: "" }], // 或者初始化为空数组的具体对象结构 [{score:"", tag:""}]
+    },
+    category: "",
+  });
   function updateExportConfig(updater: (config: typeof exportConfig) => void) {
     const config = { ...exportConfig };
     updater(config);
@@ -198,14 +275,110 @@ export function OriginalDetect() {
       );
     }
   }
+  // 从消息队列中获取这条记录
+  let userMessage = session.mask.context.pop();
+  if (userMessage) {
+    const textContent = userMessage.content;
+    if (typeof textContent === "string") {
+      const lines = textContent.split("\n");
+      title = lines[0];
+      content = lines.slice(1).join("\n");
+    }
+  }
+  //const { baidu,_360,score } = detectResult;
+  useEffect(() => {
+    console.log("11111");
+    fetchData();
+  }, []);
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      console.log("222222");
+      /*const response = await fetch(analysisUrl, {
+        body: JSON.stringify({
+          title: title,
+          content: content,
+        }),
+        headers: {
+          "Content-Type": "application/json",
+          "token": token
+        },
+        method: "POST"
+      });
+      const data = await response.json();*/
+      const jsonString =
+        '{"code":0,"msg":"成功","data":{"score":{"score":"80.92","_360":"-","baidu":"80.92"},"risk2":{"rtype":"2","action":"1","labelsList":[{"level":"1","hint":"破局","label":"400"}]},"risk1":{"rtype":"1","action":"1","labelsList":[{"level":"1","hint":"破局","label":"400"}]},"analysisTitle":{"emotion":"中性","titlesection":"true","category1":"科技","title":"标题:国产旗舰手机 破局征程"},"extractLabel":{"labelinfo":{"title":"标题:国产旗舰手机 破局征程","labels":[{"score":"1.65409","tag":"高端旗舰"},{"score":"1.13363","tag":"华为"},{"score":"1.04158","tag":"小米"},{"score":"0.99395","tag":"国产"},{"score":"0.9321","tag":"国产手机"}]},"category":"科技"}}}';
+      const data = JSON.parse(jsonString);
+      console.log("易撰返回：", JSON.stringify(data));
+      if (data && data.data && data.data.risk1) {
+        console.log("风险类型1:", data.data.risk1);
+        setRisk1(data.data.risk1);
+        console.log("风险类型1:", JSON.stringify(risk1));
+      }
+      if (data && data.data && data.data.risk2) {
+        setRisk2(data.data.risk2);
+        console.log("风险类型2:", risk2);
+      }
+      if (data && data.data && data.data.score) {
+        setScore(data.data.score);
+        console.log("文章评分:", score);
+      }
+      if (data && data.data && data.data.analysisTitle) {
+        setAnalysisTitle(data.data.analysisTitle);
+        console.log("文章标题分析:", analysisTitle);
+      }
+      if (data && data.data && data.data.extractLabel) {
+        setExtractLabel(data.data.extractLabel);
+        console.log("文章标签:", extractLabel);
+      }
+      //detectResult = data.data.score;
 
+      /*const labels = data.data.extractLabel.labelinfo.labels;
+      labels.forEach((label: { tag: any; score: any; }) => {
+        console.log(`标签: ${label.tag}, 得分: ${label.score}`);
+      });*/
+
+      showToast("检测完成");
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  console.log("detectResult=", score);
+  console.log("baidu=", score.baidu);
+  console.log("_360=", score._360);
+  console.log("score=", score.score);
   return (
     <>
       <List>
-        <ListItem className={styles["original-result-value"]}
-                  title="原创检测结果："
+        <ListItem className={styles["original-result-value"]} title="标题：">
+          <span>{analysisTitle.title}</span>
+        </ListItem>
+        <ListItem
+          className={styles["original-result-value"]}
+          title="风险检测："
         >
-          <span >NaN</span>
+          <span>{risk1.action}</span>
+        </ListItem>
+        <ListItem
+          className={styles["original-result-value"]}
+          title="原创分值："
+        >
+          <span>{score.score}</span>
+        </ListItem>
+        <ListItem
+          className={styles["original-result-value"]}
+          title="标题分析："
+        >
+          <span>{score.score}</span>
+        </ListItem>
+        <ListItem
+          className={styles["original-result-value"]}
+          title="文章标签/领域："
+        >
+          <span>{extractLabel.category}</span>
         </ListItem>
       </List>
       <Steps
@@ -216,26 +389,38 @@ export function OriginalDetect() {
       {/*原创检测过程*/}
       <div className={styles["original-detect-wrap"]}>
         <div className={styles["original-detect-item"]}>
-          <NextImage
-              src={OKIcon.src}
-              alt="logo"
-              width={25}
-              height={25}
-          />
+          <NextImage src={OKIcon.src} alt="logo" width={25} height={25} />
           <div className={styles["original-detect-item-provide"]}>
             经baidu原创检测得分：
           </div>
           <div className={styles["original-detect-item-score"]}>
-            20
+            {score.baidu}
+          </div>
+        </div>
+        <div className={styles["original-detect-item"]}>
+          <NextImage src={OKIcon.src} alt="logo" width={25} height={25} />
+          <div className={styles["original-detect-item-provide"]}>
+            经360原创检测得分：
+          </div>
+          <div className={styles["original-detect-item-score"]}>
+            {score._360}
+          </div>
+        </div>
+        <div className={styles["original-detect-item"]}>
+          <NextImage src={OKIcon.src} alt="logo" width={25} height={25} />
+          <div className={styles["original-detect-item-provide"]}>
+            综合原创检测得分：
+          </div>
+          <div className={styles["original-detect-item-score"]}>
+            {score.score}
           </div>
         </div>
       </div>
 
       <div
-          className={styles["message-exporter-body"]}
-          style={currentStep.value !== "detect" ? { display: "none" } : {}}
-      >
-      </div>
+        className={styles["message-exporter-body"]}
+        style={currentStep.value !== "detect" ? { display: "none" } : {}}
+      ></div>
       {currentStep.value === "preview" && (
         <div className={styles["message-exporter-body"]}>{preview()}</div>
       )}

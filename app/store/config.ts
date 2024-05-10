@@ -42,11 +42,11 @@ export const DEFAULT_CONFIG = {
   dontShowMaskSplashScreen: false, // dont show splash screen when create chat
   hideBuiltinMasks: false, // dont add builtin masks
 
-  customModels: "",
+  customModels: "claude-3-sonnet",
   models: DEFAULT_MODELS as any as LLMModel[],
 
   modelConfig: {
-    model: "gpt-3.5-turbo" as ModelType,
+    model: "claude-3-sonnet-20240229" as ModelType,
     temperature: 0.5,
     top_p: 1,
     max_tokens: 4000,
