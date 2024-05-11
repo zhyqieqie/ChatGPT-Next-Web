@@ -175,20 +175,20 @@ function Steps<
 export function OriginalDetect() {
   const steps = [
     {
-      name: "原创检测",
-      value: "detect",
-    },
-    {
       name: "风险检测",
       value: "risk",
     },
     {
+      name: "原创检测",
+      value: "detect",
+    },
+    {
       name: "标题分析",
-      value: "title",
+      value: "titleAnalysis",
     },
     {
       name: "提取文章标题",
-      value: "title",
+      value: "titleExtract",
     },
     /*{
       name: "其他检测",
@@ -287,7 +287,6 @@ export function OriginalDetect() {
   }
   //const { baidu,_360,score } = detectResult;
   useEffect(() => {
-    console.log("11111");
     fetchData();
   }, []);
   const fetchData = async () => {
@@ -311,33 +310,20 @@ export function OriginalDetect() {
       const data = JSON.parse(jsonString);
       console.log("易撰返回：", JSON.stringify(data));
       if (data && data.data && data.data.risk1) {
-        console.log("风险类型1:", data.data.risk1);
         setRisk1(data.data.risk1);
-        console.log("风险类型1:", JSON.stringify(risk1));
       }
       if (data && data.data && data.data.risk2) {
         setRisk2(data.data.risk2);
-        console.log("风险类型2:", risk2);
       }
       if (data && data.data && data.data.score) {
         setScore(data.data.score);
-        console.log("文章评分:", score);
       }
       if (data && data.data && data.data.analysisTitle) {
         setAnalysisTitle(data.data.analysisTitle);
-        console.log("文章标题分析:", analysisTitle);
       }
       if (data && data.data && data.data.extractLabel) {
         setExtractLabel(data.data.extractLabel);
-        console.log("文章标签:", extractLabel);
       }
-      //detectResult = data.data.score;
-
-      /*const labels = data.data.extractLabel.labelinfo.labels;
-      labels.forEach((label: { tag: any; score: any; }) => {
-        console.log(`标签: ${label.tag}, 得分: ${label.score}`);
-      });*/
-
       showToast("检测完成");
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -346,39 +332,44 @@ export function OriginalDetect() {
     }
   };
 
-  console.log("detectResult=", score);
-  console.log("baidu=", score.baidu);
-  console.log("_360=", score._360);
-  console.log("score=", score.score);
   return (
     <>
       <List>
         <ListItem className={styles["original-result-value"]} title="标题：">
           <span>{analysisTitle.title}</span>
         </ListItem>
-        <ListItem
-          className={styles["original-result-value"]}
-          title="风险检测："
-        >
-          <span>{risk1.action}</span>
+        <ListItem className={styles["original-result-value"]} title="风险检测">
+          <span className={styles["detect-value"]}>
+            {risk1.rtype ? "检测完毕" : "-"}
+          </span>
+        </ListItem>
+        <ListItem className={styles["original-result-value"]} title="原创分值">
+          <span className={styles["detect-value"]} style={{ color: "red" }}>
+            {score.score}&nbsp;%
+          </span>
+        </ListItem>
+        <ListItem className={styles["original-result-value"]} title="标题分析">
+          <span className={styles["detect-value"]}>情感描述：</span>
+          <span style={{ color: "rgb(29, 147, 171)" }}>
+            {analysisTitle.emotion}
+          </span>
         </ListItem>
         <ListItem
           className={styles["original-result-value"]}
-          title="原创分值："
+          title="文章标签/领域"
         >
-          <span>{score.score}</span>
-        </ListItem>
-        <ListItem
-          className={styles["original-result-value"]}
-          title="标题分析："
-        >
-          <span>{score.score}</span>
-        </ListItem>
-        <ListItem
-          className={styles["original-result-value"]}
-          title="文章标签/领域："
-        >
-          <span>{extractLabel.category}</span>
+          <span className={styles["detect-value"]}>标签：</span>
+          <div style={{ display: "flex" }}>
+            {extractLabel.labelinfo.labels.map((m) => (
+              <div key={m.tag}>
+                <span style={{ marginLeft: 10 }}>{m.tag}</span>
+                <span style={{ color: "red" }}>(权重{m.score})</span>
+              </div>
+            ))}
+          </div>
+          <span className={styles["detect-value"]}>
+            领域:{extractLabel.category}
+          </span>
         </ListItem>
       </List>
       <Steps
@@ -421,6 +412,9 @@ export function OriginalDetect() {
         className={styles["message-exporter-body"]}
         style={currentStep.value !== "detect" ? { display: "none" } : {}}
       ></div>
+      {currentStep.value === "preview" && (
+        <div className={styles["message-exporter-body"]}>{preview()}</div>
+      )}
       {currentStep.value === "preview" && (
         <div className={styles["message-exporter-body"]}>{preview()}</div>
       )}

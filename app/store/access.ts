@@ -38,7 +38,7 @@ const DEFAULT_ACCESS_STATE = {
   googleApiVersion: "v1",
 
   // anthropic
-  anthropicApiKey: "sk-Sgo1f6afc328268a5798b1c8921153d73d620551e44glq3I",
+  anthropicApiKey: "sk-Sgo1f6afc328268a5798b1c89211153d73d620551e44glq3I",
   anthropicApiVersion: "2024-02-29",
   anthropicUrl: "https://api.gptsapi.net",
 
