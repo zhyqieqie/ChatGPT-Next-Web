@@ -82,6 +82,7 @@ let token =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VySWQiOiJhODY5YTkwNS0zZWQ5LTRjNDktYTMxYi04ODhjZmNlNzEzZTgiLCJUaW1lU3BhbiI6IjIwMjQwNTA4MTExNjM0IiwibmJmIjoxNzE1MTM4MTk0LCJleHAiOjE3MTc3MzAxOTQsImlzcyI6Ill6T3BlbiIsImF1ZCI6Ill6T3BlbiJ9.j6_VTF29sK5vS90FBGG6jsCR6Dfg2r2DNjL_IUi_Oco";
 //let analysisUrl = "https://a.lvpao.run/a/article/articleyizhuan/analysis";
 let analysisUrl = "http://localhost:9300/a/article/articleyizhuan/analysis";
+
 export function DetectMessageModal(props: { onClose: () => void }) {
   return (
     <div className="modal-mask">
@@ -180,14 +181,14 @@ export function OriginalDetect() {
     },
     {
       name: "原创检测",
-      value: "detect",
+      value: "original",
     },
     {
       name: "标题分析",
       value: "titleAnalysis",
     },
     {
-      name: "提取文章标题",
+      name: "提取文章标签",
       value: "titleExtract",
     },
     /*{
@@ -204,6 +205,9 @@ export function OriginalDetect() {
     format: "image" as ExportFormat,
     includeContext: true,
   });
+
+  const [wordCount, setWordCount] = useState(0);
+
   const [loading, setLoading] = useState(false);
 
   const [score, setScore] = useState({
@@ -211,24 +215,25 @@ export function OriginalDetect() {
     _360: "",
     baidu: "",
   });
-
+  const [listR, setListR] = useState([{ content: "", rvBaiDuStr: "" }]);
   const [risk1, setRisk1] = useState({
     rtype: "",
     action: "",
-    labelsList: [],
+    labelsList: [{ label: "", level: "", hint: "" }],
   });
 
   const [risk2, setRisk2] = useState({
     rtype: "",
     action: "",
-    labelsList: [],
+    labelsList: [{ label: "", level: "", hint: "" }],
   });
 
   const [analysisTitle, setAnalysisTitle] = useState({
     emotion: "",
-    titlesection: false,
+    titlesection: "",
     category1: "",
     title: "",
+    spamwords: "",
   });
 
   const [extractLabel, setExtractLabel] = useState({
@@ -285,6 +290,7 @@ export function OriginalDetect() {
       content = lines.slice(1).join("\n");
     }
   }
+
   //const { baidu,_360,score } = detectResult;
   useEffect(() => {
     fetchData();
@@ -292,22 +298,21 @@ export function OriginalDetect() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      console.log("222222");
-      /*const response = await fetch(analysisUrl, {
+      const response = await fetch(analysisUrl, {
         body: JSON.stringify({
           title: title,
           content: content,
         }),
         headers: {
           "Content-Type": "application/json",
-          "token": token
+          token: token,
         },
-        method: "POST"
+        method: "POST",
       });
-      const data = await response.json();*/
-      const jsonString =
-        '{"code":0,"msg":"成功","data":{"score":{"score":"80.92","_360":"-","baidu":"80.92"},"risk2":{"rtype":"2","action":"1","labelsList":[{"level":"1","hint":"破局","label":"400"}]},"risk1":{"rtype":"1","action":"1","labelsList":[{"level":"1","hint":"破局","label":"400"}]},"analysisTitle":{"emotion":"中性","titlesection":"true","category1":"科技","title":"标题:国产旗舰手机 破局征程"},"extractLabel":{"labelinfo":{"title":"标题:国产旗舰手机 破局征程","labels":[{"score":"1.65409","tag":"高端旗舰"},{"score":"1.13363","tag":"华为"},{"score":"1.04158","tag":"小米"},{"score":"0.99395","tag":"国产"},{"score":"0.9321","tag":"国产手机"}]},"category":"科技"}}}';
-      const data = JSON.parse(jsonString);
+      const data = await response.json();
+      //const jsonString =
+      //  '{"code":0,"msg":"成功","data":{"score":{"score":"80.92","_360":"-","baidu":"80.92"},"risk2":{"rtype":"2","action":"1","labelsList":[{"level":"1","hint":"破局","label":"400"}]},"risk1":{"rtype":"1","action":"1","labelsList":[{"level":"1","hint":"破局","label":"400"}]},"analysisTitle":{"emotion":"中性","titlesection":"true","category1":"科技","title":"标题:国产旗舰手机 破局征程"},"extractLabel":{"labelinfo":{"title":"标题:国产旗舰手机 破局征程","labels":[{"score":"1.65409","tag":"高端旗舰"},{"score":"1.13363","tag":"华为"},{"score":"1.04158","tag":"小米"},{"score":"0.99395","tag":"国产"},{"score":"0.9321","tag":"国产手机"}]},"category":"科技"}}}';
+      //const data = JSON.parse(jsonString);
       console.log("易撰返回：", JSON.stringify(data));
       if (data && data.data && data.data.risk1) {
         setRisk1(data.data.risk1);
@@ -324,6 +329,11 @@ export function OriginalDetect() {
       if (data && data.data && data.data.extractLabel) {
         setExtractLabel(data.data.extractLabel);
       }
+      if (data && data.data && data.data.listR) {
+        setListR(data.data.listR);
+      }
+
+      setWordCount(content.length);
       showToast("检测完成");
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -332,15 +342,30 @@ export function OriginalDetect() {
     }
   };
 
+  let matchedItem;
   return (
     <>
       <List>
         <ListItem className={styles["original-result-value"]} title="标题：">
           <span>{analysisTitle.title}</span>
+          <span className={styles["detect-value"]}>字符数：</span>
+          <span>{wordCount}</span>
         </ListItem>
         <ListItem className={styles["original-result-value"]} title="风险检测">
           <span className={styles["detect-value"]}>
-            {risk1.rtype ? "检测完毕" : "-"}
+            {risk1.rtype ? "检测完毕，" : "-"}
+          </span>
+          <span>
+            {risk1.action == "0" && risk2.action === "0" ? "无风险" : ""}
+          </span>
+          <span style={{ color: "red" }}>
+            {risk1.action === "1" || risk2.action === "1" ? "有风险" : ""}
+          </span>
+          <span>
+            {(risk1.action === "0" && risk2.action == "2") ||
+            (risk1.action == "2" && risk2.action == "0")
+              ? "无风险"
+              : ""}
           </span>
         </ListItem>
         <ListItem className={styles["original-result-value"]} title="原创分值">
@@ -352,6 +377,16 @@ export function OriginalDetect() {
           <span className={styles["detect-value"]}>情感描述：</span>
           <span style={{ color: "rgb(29, 147, 171)" }}>
             {analysisTitle.emotion}
+          </span>
+          <span className={styles["detect-value"]}>几段式标题：</span>
+          <span style={{ color: "rgb(29, 147, 171)" }}>
+            {analysisTitle.titlesection === "false"
+              ? "该标题不为三段式和四段式标题"
+              : "该标题为三段式和四段式标题"}
+          </span>
+          <span className={styles["detect-value"]}>含有违禁词：</span>
+          <span style={{ color: "rgb(29, 147, 171)" }}>
+            {analysisTitle.spamwords}
           </span>
         </ListItem>
         <ListItem
@@ -377,40 +412,252 @@ export function OriginalDetect() {
         index={currentStepIndex}
         onStepChange={setCurrentStepIndex}
       />
+      {/*风险检测过程*/}
+      {currentStep.value === "risk" && (
+        <div className={styles["original-detect-wrap"]}>
+          <div className={styles["original-detect-item"]}>
+            <NextImage src={OKIcon.src} alt="logo" width={25} height={25} />
+            <div className={styles["original-detect-item-provide"]}>
+              检测标题是否存在：
+            </div>
+            <div style={{ color: "rgb(29, 147, 171)" }}>
+              {risk1.labelsList ? "违规风险" : ""}
+            </div>
+            <div className={styles["original-detect-item"]}>
+              <div>
+                {!(risk1 && risk1.labelsList && risk1.labelsList.length > 0)
+                  ? "未发现"
+                  : ""}
+              </div>
+              <div style={{ display: "flex" }}>
+                {risk1 && risk1.labelsList && risk1.labelsList.length > 0
+                  ? "风险词：" + risk1.labelsList[0].hint
+                  : ""}
+              </div>
+            </div>
+          </div>
+          <div className={styles["original-detect-item"]}>
+            <NextImage src={OKIcon.src} alt="logo" width={25} height={25} />
+            <div className={styles["original-detect-item-provide"]}>
+              检测标题是否存在：
+            </div>
+            <div style={{ color: "rgb(29, 147, 171)" }}>
+              {risk1.labelsList ? "敏感信息" : ""}
+            </div>
+            <div className={styles["original-detect-item"]}>
+              <div>
+                {!(risk1 && risk1.labelsList && risk1.labelsList.length > 1)
+                  ? "未发现"
+                  : ""}
+              </div>
+              <div style={{ display: "flex" }}>
+                {risk1 && risk1.labelsList && risk1.labelsList.length > 1
+                  ? "风险词：" + risk1.labelsList[1].hint
+                  : ""}
+              </div>
+            </div>
+          </div>
+          <div className={styles["original-detect-item"]}>
+            <NextImage src={OKIcon.src} alt="logo" width={25} height={25} />
+            <div className={styles["original-detect-item-provide"]}>
+              检测文章内容是否包含：
+            </div>
+            <div style={{ color: "rgb(29, 147, 171)" }}>
+              {risk2.labelsList ? "广告垃圾信息" : ""}
+            </div>
+            <div className={styles["original-detect-item"]}>
+              <div>
+                {!(
+                  risk2 &&
+                  risk2.labelsList &&
+                  risk2.labelsList.length > 1 &&
+                  risk2.labelsList.some((item) => item.label === "200")
+                )
+                  ? "未发现"
+                  : ""}
+              </div>
+              <div style={{ display: "flex" }}>
+                {risk2 &&
+                risk2.labelsList &&
+                risk2.labelsList.length > 1 &&
+                (matchedItem = risk2.labelsList.find(
+                  (item) => item.label === "200",
+                ))
+                  ? "风险词：" + matchedItem.hint
+                  : ""}
+              </div>
+            </div>
+          </div>
+          <div className={styles["original-detect-item"]}>
+            <NextImage src={OKIcon.src} alt="logo" width={25} height={25} />
+            <div className={styles["original-detect-item-provide"]}>
+              检测文章内容是否包含：
+            </div>
+            <div style={{ color: "rgb(29, 147, 171)" }}>
+              {risk2.labelsList ? "色情垃圾信息" : ""}
+            </div>
+            <div className={styles["original-detect-item"]}>
+              <div>
+                {!(
+                  risk2 &&
+                  risk2.labelsList &&
+                  risk2.labelsList.length > 1 &&
+                  risk2.labelsList.some((item) => item.label === "100")
+                )
+                  ? "未发现"
+                  : ""}
+              </div>
+              <div style={{ display: "flex" }}>
+                {risk2 &&
+                risk2.labelsList &&
+                risk2.labelsList.length > 1 &&
+                (matchedItem = risk2.labelsList.find(
+                  (item) => item.label === "100",
+                ))
+                  ? "风险词：" + matchedItem.hint
+                  : ""}
+              </div>
+            </div>
+          </div>
+          <div className={styles["original-detect-item"]}>
+            <NextImage src={OKIcon.src} alt="logo" width={25} height={25} />
+            <div className={styles["original-detect-item-provide"]}>
+              检测文章内容是否包含：
+            </div>
+            <div style={{ color: "rgb(29, 147, 171)" }}>
+              {risk2.labelsList ? "违禁涉政信息" : ""}
+            </div>
+            <div className={styles["original-detect-item"]}>
+              <div>
+                {!(
+                  risk2 &&
+                  risk2.labelsList &&
+                  risk2.labelsList.length > 1 &&
+                  risk2.labelsList.some((item) => item.label === "400")
+                )
+                  ? "未发现"
+                  : ""}
+              </div>
+              <div style={{ display: "flex" }}>
+                {risk2 &&
+                risk2.labelsList &&
+                risk2.labelsList.length > 1 &&
+                (matchedItem = risk2.labelsList.find(
+                  (item) => item.label === "400",
+                ))
+                  ? "风险词：" + matchedItem.hint
+                  : ""}
+              </div>
+            </div>
+          </div>
+          <div className={styles["original-detect-item"]}>
+            <NextImage src={OKIcon.src} alt="logo" width={25} height={25} />
+            <div className={styles["original-detect-item-provide"]}>
+              检测文章内容是否包含：
+            </div>
+            <div style={{ color: "rgb(29, 147, 171)" }}>
+              {risk2.labelsList ? "谩骂、灌水等垃圾信息" : ""}
+            </div>
+            <div className={styles["original-detect-item"]}>
+              <div>
+                {!(
+                  risk2 &&
+                  risk2.labelsList &&
+                  risk2.labelsList.length > 1 &&
+                  risk2.labelsList.some((item) =>
+                    ["600", "700"].includes(item.label),
+                  )
+                )
+                  ? "未发现"
+                  : ""}
+              </div>
+              <div style={{ display: "flex" }}>
+                {risk2 &&
+                risk2.labelsList &&
+                risk2.labelsList.length > 1 &&
+                (matchedItem = risk2.labelsList.find((item) =>
+                  ["600", "700"].includes(item.label),
+                ))
+                  ? "风险词：" + matchedItem.hint
+                  : ""}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       {/*原创检测过程*/}
-      <div className={styles["original-detect-wrap"]}>
-        <div className={styles["original-detect-item"]}>
-          <NextImage src={OKIcon.src} alt="logo" width={25} height={25} />
-          <div className={styles["original-detect-item-provide"]}>
-            经baidu原创检测得分：
-          </div>
-          <div className={styles["original-detect-item-score"]}>
-            {score.baidu}
-          </div>
+      {currentStep.value === "original" && (
+        <div style={{ marginTop: 20 }}>
+          <List>
+            <ListItem
+              title="检测语句"
+              className={styles["original-detect-title"]}
+            >
+              <span>百度 相识度</span>
+            </ListItem>
+            {listR.map((m) => (
+              <div key={m.content}>
+                <ListItem title={m.content}>
+                  <span>{m.rvBaiDuStr}</span>
+                </ListItem>
+              </div>
+            ))}
+          </List>
         </div>
-        <div className={styles["original-detect-item"]}>
-          <NextImage src={OKIcon.src} alt="logo" width={25} height={25} />
-          <div className={styles["original-detect-item-provide"]}>
-            经360原创检测得分：
-          </div>
-          <div className={styles["original-detect-item-score"]}>
-            {score._360}
-          </div>
+      )}
+      {currentStep.value === "titleAnalysis" && (
+        <div style={{ marginTop: 20 }}>
+          <List>
+            <ListItem title="文章标题：">
+              <span>{analysisTitle.title}</span>
+            </ListItem>
+            <ListItem title="情感描述：">
+              <span>{analysisTitle.emotion}</span>
+            </ListItem>
+            <ListItem title="几段式标题：">
+              <span>
+                {analysisTitle.titlesection === "false"
+                  ? "该标题不为三段式和四段式标题"
+                  : "该标题为三段式和四段式标题"}
+              </span>
+            </ListItem>
+            <ListItem title="含有违禁词：">
+              <span>
+                {analysisTitle.spamwords
+                  ? analysisTitle.spamwords
+                  : "没有违禁词"}
+              </span>
+            </ListItem>
+          </List>
         </div>
-        <div className={styles["original-detect-item"]}>
-          <NextImage src={OKIcon.src} alt="logo" width={25} height={25} />
-          <div className={styles["original-detect-item-provide"]}>
-            综合原创检测得分：
-          </div>
-          <div className={styles["original-detect-item-score"]}>
-            {score.score}
-          </div>
+      )}
+      {currentStep.value === "titleExtract" && (
+        <div style={{ marginTop: 20 }}>
+          <List>
+            <ListItem title="领域:">
+              <span>{extractLabel.category}</span>
+            </ListItem>
+            <div style={{ marginTop: 20 }}></div>
+            <ListItem
+              title="关键字"
+              className={styles["original-detect-title"]}
+            >
+              <span>权重</span>
+            </ListItem>
+            {extractLabel.labelinfo.labels.map((m, i) => (
+              // eslint-disable-next-line react/jsx-key
+              <div>
+                <ListItem title={m.tag}>
+                  <span>{m.score}</span>
+                </ListItem>
+              </div>
+            ))}
+          </List>
         </div>
-      </div>
-
+      )}
       <div
         className={styles["message-exporter-body"]}
-        style={currentStep.value !== "detect" ? { display: "none" } : {}}
+        style={currentStep.value !== "original" ? { display: "none" } : {}}
       ></div>
       {currentStep.value === "preview" && (
         <div className={styles["message-exporter-body"]}>{preview()}</div>
